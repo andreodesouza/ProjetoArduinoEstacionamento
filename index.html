@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estacionamento Inteligente</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, .3);
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+        }
+
+        .valor {
+            font-size: 50px;
+            font-weight: bold;
+        }
+
+        .azul {
+            background: #2563eb;
+        }
+
+        .verde {
+            background: #16a34a;
+        }
+
+        .vermelho {
+            background: #dc2626;
+        }
+
+        .roxo {
+            background: #7c3aed;
+        }
+
+        .secao {
+            margin-top: 25px;
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 20px;
+        }
+
+        .clima {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .temp {
+            font-size: 60px;
+            font-weight: bold;
+        }
+
+        .estatisticas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .mini-card {
+            background: #334155;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .mini-card span {
+            display: block;
+            font-size: 40px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .barra {
+            height: 30px;
+            background: #334155;
+            border-radius: 50px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progresso {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f59e0b, #ea580c);
+            transition: .5s;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .botoes {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        button {
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .btn-entrada {
+            background: #16a34a;
+        }
+
+        .btn-saida {
+            background: #dc2626;
+        }
+
+        /* OVERLAYS */
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, .96);
+
+            opacity: 0;
+            visibility: hidden;
+            transition: .4s;
+
+            z-index: 9999;
+        }
+
+        .overlay.ativo {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .carro {
+            font-size: 120px;
+        }
+
+        .carro-entrada {
+            animation: entrada 2s infinite linear;
+        }
+
+        .carro-saida {
+            animation: saida 2s infinite linear;
+        }
+
+        .mensagem {
+            text-align: center;
+        }
+
+        .mensagem h1 {
+            font-size: 5rem;
+            margin-top: 20px;
+        }
+
+        .mensagem p {
+            font-size: 2rem;
+        }
+
+        @keyframes entrada {
+            0% {
+                transform: translateX(-200px);
+            }
+
+            100% {
+                transform: translateX(200px);
+            }
+        }
+
+        @keyframes saida {
+            0% {
+                transform: translateX(200px);
+            }
+
+            100% {
+                transform: translateX(-200px);
+            }
+        }
+
+        @media(max-width:768px) {
+
+            .mensagem h1 {
+                font-size: 2.5rem;
+            }
+
+            .carro {
+                font-size: 80px;
+            }
+
+            .estatisticas {
+                grid-template-columns: 1fr;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🚗 ESTACIONAMENTO INTELIGENTE</h1>
+        <p class="subtitulo" id="status-conexao">Sistema de Controle de Vagas • Conectando...</p>
+
+        <div class="dashboard">
+
+            <div class="card azul">
+                <h3>Total de Vagas</h3>
+                <div class="valor" id="total">10</div>
+            </div>
+
+            <div class="card verde">
+                <h3>Vagas Livres</h3>
+                <div class="valor" id="livres">10</div>
+            </div>
+
+            <div class="card vermelho">
+                <h3>Vagas Ocupadas</h3>
+                <div class="valor" id="ocupadas">0</div>
+            </div>
+
+            <div class="card roxo">
+                <h3>Horário</h3>
+                <div id="hora"></div>
+            </div>
+
+        </div>
+
+        <div class="secao">
+
+            <h2>🌤️ Previsão do Tempo</h2>
+
+            <div class="clima">
+
+                <div>
+                    <h3>Saquarema - RJ</h3>
+                    <p>Ensolarado</p>
+                    <p>Umidade: 68%</p>
+                </div>
+
+                <div class="temp">
+                    28°C
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="secao">
+
+            <h2>📊 Movimento do Dia</h2>
+
+            <div class="estatisticas">
+
+                <div class="mini-card">
+                    📥 Entradas
+                    <span id="entradas">0</span>
+                </div>
+
+                <div class="mini-card">
+                    📤 Saídas
+                    <span id="saidas">0</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="secao">
+
+            <h2>📈 Taxa de Ocupação</h2>
+
+            <div class="barra">
+                <div id="progresso" class="progresso"></div>
+            </div>
+
+            <p id="percentual" style="margin-top:10px">0%</p>
+
+            <div id="status" class="status">
+                🟢 VAGAS DISPONÍVEIS
+            </div>
+
+        </div>
+
+        <div class="botoes">
+
+            <button class="btn-entrada" onclick="entradaVeiculo()">
+                🚗 Liberar Entrada
+            </button>
+
+            <button class="btn-saida" onclick="saidaVeiculo()">
+                🚙 Registrar Saída
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ENTRADA -->
+
+    <div id="entradaLiberada" class="overlay">
+
+        <div class="carro carro-entrada">
+            🚗
+        </div>
+
+        <div class="mensagem">
+            <h1 style="color:#22c55e;">
+                ENTRADA LIBERADA
+            </h1>
+
+            <p>Pode Prosseguir</p>
+        </div>
+
+    </div>
+
+    <!-- SAÍDA -->
+
+    <div id="saidaLiberada" class="overlay">
+
+        <div class="carro carro-saida">
+            🚙
+        </div>
+
+        <div class="mensagem">
+            <h1 style="color:#3b82f6;">
+                SAÍDA LIBERADA
+            </h1>
+
+            <p>Boa Viagem!</p>
+        </div>
+
+    </div>
+
+    <script>
+        let ultimoEventoId = null;
+
+        function atualizarHora() {
+            const agora = new Date();
+            document.getElementById("hora").innerHTML =
+                agora.toLocaleDateString("pt-BR") +
+                "<br>" +
+                agora.toLocaleTimeString("pt-BR");
+        }
+
+        function mostrarAnimacao(tipo) {
+            const idOverlay = tipo === "ENTRADA" ? "entradaLiberada" : "saidaLiberada";
+            const tela = document.getElementById(idOverlay);
+            tela.classList.add("ativo");
+
+            setTimeout(() => {
+                tela.classList.remove("ativo");
+            }, 3000);
+        }
+
+        async function sincronizarDados() {
+            try {
+                const resposta = await fetch("/api/dados");
+                const dados = await resposta.json();
+
+                const totalVagas = dados.total_vagas;
+                const ocupadas = dados.ocupadas;
+                const livres = totalVagas - ocupadas;
+
+                document.getElementById("total").innerText = totalVagas;
+                document.getElementById("livres").innerText = livres;
+                document.getElementById("ocupadas").innerText = ocupadas;
+                document.getElementById("entradas").innerText = dados.entradas_dia;
+                document.getElementById("saidas").innerText = dados.saidas_dia;
+
+                // Status da conexão USB com o Arduino
+                const subtitulo = document.getElementById("status-conexao");
+                subtitulo.innerText = dados.arduino_conectado
+                    ? "Sistema de Controle de Vagas • 🟢 Arduino Conectado"
+                    : "Sistema de Controle de Vagas • 🟡 Modo Simulação (Arduino desconectado)";
+
+                // Barra de progresso
+                const percentual = Math.round((ocupadas / totalVagas) * 100);
+                document.getElementById("progresso").style.width = percentual + "%";
+                document.getElementById("percentual").innerText = percentual + "% de ocupação";
+
+                if (livres > 0) {
+                    document.getElementById("status").innerHTML = "🟢 VAGAS DISPONÍVEIS";
+                } else {
+                    document.getElementById("status").innerHTML = "🔴 ESTACIONAMENTO LOTADO";
+                }
+
+                // Dispara o overlay automaticamente quando um novo evento ocorre (sensor ou botão)
+                if (ultimoEventoId === null) {
+                    ultimoEventoId = dados.ultimo_evento_id;
+                } else if (dados.ultimo_evento_id > ultimoEventoId) {
+                    ultimoEventoId = dados.ultimo_evento_id;
+                    if (dados.ultimo_evento_tipo === "ENTRADA" || dados.ultimo_evento_tipo === "SAIDA") {
+                        mostrarAnimacao(dados.ultimo_evento_tipo);
+                    }
+                }
+
+            } catch (erro) {
+                console.error("Erro ao conectar com o servidor Python:", erro);
+            }
+        }
+
+        async function entradaVeiculo() {
+            const res = await fetch("/api/entrada", { method: "POST" });
+            const data = await res.json();
+            if (data.erro) {
+                alert(data.erro);
+            } else {
+                sincronizarDados();
+            }
+        }
+
+        async function saidaVeiculo() {
+            const res = await fetch("/api/saida", { method: "POST" });
+            const data = await res.json();
+            if (data.erro) {
+                alert(data.erro);
+            } else {
+                sincronizarDados();
+            }
+        }
+
+        setInterval(atualizarHora, 1000);
+        setInterval(sincronizarDados, 500); // Checa o Arduino a cada meio segundo
+
+        atualizarHora();
+        sincronizarDados();
+    </script>
+
+</body>
+
+</html>
